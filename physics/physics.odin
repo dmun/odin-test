@@ -17,4 +17,3 @@ step :: proc(using particle: ^Particle, deltatime: f32) {
 	velocity += force / mass * deltatime
 	position += velocity * deltatime
 }
-

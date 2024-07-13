@@ -2,8 +2,8 @@ package main
 
 import "core:fmt"
 import "core:math"
-import "vendor:raylib"
 import "physics"
+import "vendor:raylib"
 
 main :: proc() {
 	using raylib
