@@ -35,7 +35,7 @@ main :: proc() {
 		defer EndDrawing()
 
 		defer DrawFPS(0, 0)
-		defer gui.draw_crosshair(crosshair)
+		defer gui.draw_crosshair(&crosshair)
 
 		BeginMode3D(camera)
 		defer EndMode3D()
