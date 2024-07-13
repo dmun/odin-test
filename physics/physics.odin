@@ -12,8 +12,8 @@ Particle :: struct {
 	radius:   f32,
 }
 
-step :: proc(using particle: ^Particle, deltatime: f32) {
+step :: proc(using particle: ^Particle, delta_time: f32) {
 	force += mass * GRAVITY
-	velocity += force / mass * deltatime
-	position += velocity * deltatime
+	velocity += force / mass * delta_time
+	position += velocity * delta_time
 }

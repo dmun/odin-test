@@ -2,17 +2,16 @@ package main
 
 import "core:fmt"
 import "core:math"
+import "gui"
 import "physics"
 import "vendor:raylib"
 
 main :: proc() {
 	using raylib
-	screenWidth: i32 = 1280
-	screenHeight: i32 = 720
 
 	SetConfigFlags({.MSAA_4X_HINT})
 	SetTargetFPS(240)
-	InitWindow(screenWidth, screenHeight, "odin-test")
+	InitWindow(1280, 720, "odin-test")
 
 	p := physics.Particle{Vector3(0), Vector3(0), Vector3(0), 10, 10}
 
@@ -24,12 +23,19 @@ main :: proc() {
 		projection = .PERSPECTIVE,
 	}
 
+	crosshair := gui.CrosshairSettings {
+		length    = 8,
+		gap       = 4,
+		thickness = 2,
+		color     = GREEN,
+	}
+
 	for !WindowShouldClose() {
 		BeginDrawing()
 		defer EndDrawing()
 
-		ClearBackground(BLACK)
 		defer DrawFPS(0, 0)
+		defer gui.draw_crosshair(crosshair)
 
 		BeginMode3D(camera)
 		defer EndMode3D()
@@ -41,5 +47,7 @@ main :: proc() {
 
 		DrawSphere(p.position, p.radius, BLUE)
 		DrawGrid(30, 100)
+
+		ClearBackground(ColorBrightness(BLACK, 0.1))
 	}
 }
