@@ -16,8 +16,11 @@ Particle :: struct {
 	using body: RigidBody,
 }
 
-step :: proc(using body: ^RigidBody, delta_time: f32) {
-	force += mass * GRAVITY
-	velocity += force / mass * delta_time
-	position += velocity * delta_time
+step :: proc(bodies: ^[dynamic]^RigidBody, delta_time: f32) {
+	for &body in bodies {
+		using body
+		force += mass * GRAVITY
+		velocity += force / mass * delta_time
+		position += velocity * delta_time
+	}
 }

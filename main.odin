@@ -23,8 +23,8 @@ update_player :: proc(using player: ^Player) {
 	if IsKeyDown(.A) {movement_force += Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * DEG2RAD)}
 	if IsKeyDown(.D) {movement_force += Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * DEG2RAD)}
 	if IsKeyPressed(.SPACE) {
-		movement_force.y = 10
-		velocity.y = 10
+		movement_force.y = 100
+		velocity.y = 100
 	}
 	force += movement_force
 
@@ -39,8 +39,7 @@ update_player :: proc(using player: ^Player) {
 
 draw_player :: proc(using player: ^Player) {
 	using rl
-
-	DrawCubeV(position, Vector3(20), BLUE)
+	DrawCubeV(position, Vector3(20), WHITE)
 }
 
 main :: proc() {
@@ -49,14 +48,6 @@ main :: proc() {
 	SetConfigFlags({.MSAA_4X_HINT})
 	SetTargetFPS(240)
 	InitWindow(1280, 720, "odin-test")
-
-	p := physics.Particle {
-		position = Vector3(0),
-		force    = Vector3(0),
-		velocity = Vector3(0),
-		mass     = 10,
-		radius   = 10,
-	}
 
 	camera := Camera3D {
 		position   = Vector3{0, 10, 0},
@@ -90,23 +81,23 @@ main :: proc() {
 		mass        = 1,
 	}
 
-	last_key := KeyboardKey.KEY_NULL
-
 	active_camera := &player.camera
 	camera_mode := CameraMode.CUSTOM
+
+	particles: [dynamic]^physics.Particle
+	bodies: [dynamic]^physics.RigidBody
+	append(&bodies, &player.body)
+
+	timer := f64(0)
 
 	for !WindowShouldClose() {
 		BeginDrawing()
 		defer EndDrawing()
+		ClearBackground(ColorBrightness(BLACK, 0.1))
 
 		defer DrawFPS(0, 0)
 		defer gui.draw_crosshair(&crosshair)
-
-		key := GetKeyPressed()
-		if key != .KEY_NULL {
-			last_key = key
-		}
-		defer DrawText(TextFormat("%s", last_key), 0, 18, 18, WHITE)
+		defer DrawText(TextFormat("%d", len(bodies)), 0, 18, 18, WHITE)
 
 		if IsKeyPressed(.LEFT_ALT) {
 			if camera_mode == .FREE {
@@ -127,17 +118,33 @@ main :: proc() {
 		UpdateCamera(active_camera, camera_mode)
 
 		delta_time := GetFrameTime()
-		physics.step(&p, delta_time)
-		physics.step(&player, delta_time)
+		physics.step(&bodies, delta_time)
 
+		if IsMouseButtonDown(.LEFT) && GetTime() - timer > 0.1 {
+			timer = GetTime()
+
+			using active_camera
+			// TODO: Handle-based approach
+			p := new(physics.Particle)
+			p^ = physics.Particle {
+				position = target,
+				velocity = (target - position) * 10,
+				force    = (target - position) * 10,
+				radius   = 5,
+				mass     = 2,
+			}
+			append(&particles, p)
+			append(&bodies, &p.body)
+		}
 		update_player(&player)
 		draw_player(&player)
 
-		DisableCursor()
+		for &body in particles {
+			DrawSphere(body.position, body.radius, BLUE)
+		}
 
-		DrawSphere(p.position, p.radius, BLUE)
 		DrawGrid(30, 100)
 
-		ClearBackground(ColorBrightness(BLACK, 0.1))
+		DisableCursor()
 	}
 }
