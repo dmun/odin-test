@@ -26,7 +26,7 @@ update_player :: proc(using player: ^Player) {
 	if IsKeyPressed(.SPACE) {
 		movement.y = 100
 	}
-	force += movement * 10
+	force += movement * 100
 	// velocity += movement / 10
 
 	mouseDelta := GetMouseDelta() * 0.05
@@ -79,7 +79,7 @@ main :: proc() {
 		position    = Vector3{0, 10, 0},
 		force       = Vector3(0),
 		velocity    = Vector3(0),
-		mass        = 1,
+		mass        = 5,
 	}
 
 	active_camera := &player.camera
@@ -160,7 +160,7 @@ main :: proc() {
 		for &body in particles {
 			using body
 			DrawSphere(position, radius, BLUE)
-			DrawRay(Ray{position, position + velocity}, RED)
+			DrawRay(Ray{position, velocity}, RED)
 		}
 
 		DrawGrid(30, 100)

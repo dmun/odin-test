@@ -48,7 +48,6 @@ collide :: proc(bodies: ^[dynamic]^RigidBody) {
 
 		if b1.position.y <= 5 {
 			b1.position.y = 5
-			b1.velocity.y = 0
 			b1.velocity.x -= 0.4 * 9.8 * GetFrameTime() * math.sign(b1.velocity.x)
 			b1.velocity.z -= 0.4 * 9.8 * GetFrameTime() * math.sign(b1.velocity.z)
 		}
