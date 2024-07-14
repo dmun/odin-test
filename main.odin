@@ -17,16 +17,17 @@ update_player :: proc(using player: ^Player) {
 
 	axis := (camera.target - camera.position)
 
-	movement_force := Vector3(0)
-	if IsKeyDown(.W) {movement_force += axis}
-	if IsKeyDown(.S) {movement_force += -axis}
-	if IsKeyDown(.A) {movement_force += Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * DEG2RAD)}
-	if IsKeyDown(.D) {movement_force += Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * DEG2RAD)}
+	movement := Vector3(0)
+	if IsKeyDown(.W) {movement += axis}
+	if IsKeyDown(.S) {movement += -axis}
+	if IsKeyDown(.A) {movement += Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * DEG2RAD)}
+	if IsKeyDown(.D) {movement += Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * DEG2RAD)}
+	movement.y = 0
 	if IsKeyPressed(.SPACE) {
-		movement_force.y = 100
-		velocity.y = 100
+		movement.y = 100
 	}
-	force += movement_force
+	force += movement * 10
+	// velocity += movement / 10
 
 	mouseDelta := GetMouseDelta() * 0.05
 	UpdateCameraPro(&camera, 0, {mouseDelta.x, mouseDelta.y, 0}, 0)
@@ -119,6 +120,7 @@ main :: proc() {
 
 		delta_time := GetFrameTime()
 		physics.step(&bodies, delta_time)
+		physics.collide(&bodies)
 
 		if IsMouseButtonDown(.LEFT) && GetTime() - timer > 0.1 {
 			timer = GetTime()
@@ -131,7 +133,23 @@ main :: proc() {
 				velocity = (target - position) * 10,
 				force    = (target - position) * 10,
 				radius   = 5,
-				mass     = 2,
+				mass     = 20,
+			}
+			append(&particles, p)
+			append(&bodies, &p.body)
+		}
+		if IsMouseButtonDown(.RIGHT) && GetTime() - timer > 0.1 {
+			timer = GetTime()
+
+			using active_camera
+			// TODO: Handle-based approach
+			p := new(physics.Particle)
+			p^ = physics.Particle {
+				position = target,
+				velocity = Vector3{0, 10, 0},
+				force    = Vector3{0, 10, 0},
+				radius   = 5,
+				mass     = 1,
 			}
 			append(&particles, p)
 			append(&bodies, &p.body)
@@ -140,7 +158,9 @@ main :: proc() {
 		draw_player(&player)
 
 		for &body in particles {
-			DrawSphere(body.position, body.radius, BLUE)
+			using body
+			DrawSphere(position, radius, BLUE)
+			DrawRay(Ray{position, position + velocity}, RED)
 		}
 
 		DrawGrid(30, 100)
