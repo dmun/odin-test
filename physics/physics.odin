@@ -33,14 +33,13 @@ step :: proc(bodies: ^[dynamic]^RigidBody, delta_time: f32) {
 }
 
 collide :: proc(bodies: ^[dynamic]^RigidBody) {
-	using rl
 	collisions: [dynamic]Collision
 
 	for b1 in bodies {
 		for b2 in bodies {
 			if b1 == b2 {continue}
 
-			distance := Vector3Distance(b1.position, b2.position)
+			distance := rl.Vector3Distance(b1.position, b2.position)
 			if distance < 10 {
 				append(&collisions, Collision{b1, b2})
 			}
@@ -48,15 +47,14 @@ collide :: proc(bodies: ^[dynamic]^RigidBody) {
 
 		if b1.position.y <= 5 {
 			b1.position.y = 5
-			b1.velocity.x -= 0.4 * 9.8 * GetFrameTime() * math.sign(b1.velocity.x)
-			b1.velocity.z -= 0.4 * 9.8 * GetFrameTime() * math.sign(b1.velocity.z)
+			b1.velocity.x -= 0.4 * 9.8 * rl.GetFrameTime() * math.sign(b1.velocity.x)
+			b1.velocity.z -= 0.4 * 9.8 * rl.GetFrameTime() * math.sign(b1.velocity.z)
 		}
 	}
 
 	for c in collisions {
-		using c
-		norm := Vector3Normalize(body_a.position - body_b.position)
-		body_a.position += norm
-		body_b.position -= norm
+		norm := rl.Vector3Normalize(c.body_a.position - c.body_b.position)
+		c.body_a.position += norm
+		c.body_b.position -= norm
 	}
 }

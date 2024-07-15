@@ -3,44 +3,60 @@ package main
 import "core:fmt"
 import "core:math"
 import "gui"
-import "physics"
+import phy "physics"
 import rl "vendor:raylib"
 
 Player :: struct {
 	orientation: quaternion128,
 	camera:      rl.Camera3D,
-	using body:  physics.RigidBody,
+	using body:  phy.RigidBody,
 }
 
 update_player :: proc(using player: ^Player) {
-	using rl
-
 	axis := (camera.target - camera.position)
 
-	movement := Vector3(0)
-	if IsKeyDown(.W) {movement += axis}
-	if IsKeyDown(.S) {movement += -axis}
-	if IsKeyDown(.A) {movement += Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * DEG2RAD)}
-	if IsKeyDown(.D) {movement += Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * DEG2RAD)}
+	movement := rl.Vector3(0)
+	if rl.IsKeyDown(.W) {movement += axis}
+	if rl.IsKeyDown(.S) {movement += -axis}
+	if rl.IsKeyDown(.A) {movement += rl.Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * rl.DEG2RAD)}
+	if rl.IsKeyDown(
+		.D,
+	) {movement += rl.Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * rl.DEG2RAD)}
 	movement.y = 0
-	if IsKeyPressed(.SPACE) {
+	if rl.IsKeyPressed(.SPACE) {
 		movement.y = 100
 	}
 	force += movement * 100
-	// velocity += movement / 10
 
-	mouseDelta := GetMouseDelta() * 0.05
-	UpdateCameraPro(&camera, 0, {mouseDelta.x, mouseDelta.y, 0}, 0)
+	mouseDelta := rl.GetMouseDelta() * 0.05
+	rl.UpdateCameraPro(&camera, 0, {mouseDelta.x, mouseDelta.y, 0}, 0)
 
-	player.orientation = QuaternionFromVector3ToVector3(camera.position, camera.target)
+	player.orientation = rl.QuaternionFromVector3ToVector3(camera.position, camera.target)
 
 	camera.target = player.position + axis
 	camera.position = player.position
 }
 
 draw_player :: proc(using player: ^Player) {
-	using rl
-	DrawCubeV(position, Vector3(20), WHITE)
+	rl.DrawCubeV(position, rl.Vector3(20), rl.WHITE)
+}
+
+spawn_particle :: proc(
+	using camera: ^rl.Camera3D,
+	particles: ^[dynamic]^phy.Particle,
+	bodies: ^[dynamic]^phy.RigidBody,
+) {
+	// TODO: Handle-based approach
+	p := new(phy.Particle)
+	p^ = phy.Particle {
+		position = target,
+		velocity = target - position,
+		force    = target - position,
+		radius   = 5,
+		mass     = 5,
+	}
+	append(particles, p)
+	append(bodies, &p.body)
 }
 
 main :: proc() {
@@ -85,8 +101,8 @@ main :: proc() {
 	active_camera := &player.camera
 	camera_mode := CameraMode.CUSTOM
 
-	particles: [dynamic]^physics.Particle
-	bodies: [dynamic]^physics.RigidBody
+	particles: [dynamic]^phy.Particle
+	bodies: [dynamic]^phy.RigidBody
 	append(&bodies, &player.body)
 
 	timer := f64(0)
@@ -119,48 +135,20 @@ main :: proc() {
 		UpdateCamera(active_camera, camera_mode)
 
 		delta_time := GetFrameTime()
-		physics.step(&bodies, delta_time)
-		physics.collide(&bodies)
+		phy.step(&bodies, delta_time)
+		phy.collide(&bodies)
 
 		if IsMouseButtonDown(.LEFT) && GetTime() - timer > 0.1 {
 			timer = GetTime()
-
-			using active_camera
-			// TODO: Handle-based approach
-			p := new(physics.Particle)
-			p^ = physics.Particle {
-				position = target,
-				velocity = (target - position) * 10,
-				force    = (target - position) * 10,
-				radius   = 5,
-				mass     = 20,
-			}
-			append(&particles, p)
-			append(&bodies, &p.body)
+			spawn_particle(active_camera, &particles, &bodies)
 		}
-		if IsMouseButtonDown(.RIGHT) && GetTime() - timer > 0.1 {
-			timer = GetTime()
 
-			using active_camera
-			// TODO: Handle-based approach
-			p := new(physics.Particle)
-			p^ = physics.Particle {
-				position = target,
-				velocity = Vector3{0, 10, 0},
-				force    = Vector3{0, 10, 0},
-				radius   = 5,
-				mass     = 1,
-			}
-			append(&particles, p)
-			append(&bodies, &p.body)
-		}
 		update_player(&player)
 		draw_player(&player)
 
-		for &body in particles {
-			using body
-			DrawSphere(position, radius, BLUE)
-			DrawRay(Ray{position, velocity}, RED)
+		for &p in particles {
+			DrawSphere(p.position, p.radius, BLUE)
+			DrawRay(Ray{p.position, p.velocity}, RED)
 		}
 
 		DrawGrid(30, 100)
