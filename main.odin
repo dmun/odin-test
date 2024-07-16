@@ -14,14 +14,17 @@ Player :: struct {
 
 update_player :: proc(using player: ^Player) {
 	axis := (camera.target - camera.position)
-
 	movement := rl.Vector3(0)
+
 	if rl.IsKeyDown(.W) {movement += axis}
 	if rl.IsKeyDown(.S) {movement += -axis}
-	if rl.IsKeyDown(.A) {movement += rl.Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * rl.DEG2RAD)}
-	if rl.IsKeyDown(
-		.D,
-	) {movement += rl.Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * rl.DEG2RAD)}
+	if rl.IsKeyDown(.A) {
+		movement += rl.Vector3RotateByAxisAngle(axis, {0, 1, 0}, 90 * rl.DEG2RAD)
+	}
+	if rl.IsKeyDown(.D) {
+		movement += rl.Vector3RotateByAxisAngle(axis, {0, 1, 0}, -90 * rl.DEG2RAD)
+	}
+
 	movement.y = 0
 	if rl.IsKeyPressed(.SPACE) {
 		movement.y = 100
@@ -38,7 +41,7 @@ update_player :: proc(using player: ^Player) {
 }
 
 draw_player :: proc(using player: ^Player) {
-	rl.DrawCubeV(position, rl.Vector3(20), rl.WHITE)
+	rl.DrawCubeV(position, (20), rl.WHITE)
 }
 
 spawn_particle :: proc(
@@ -60,24 +63,22 @@ spawn_particle :: proc(
 }
 
 main :: proc() {
-	using rl
+	rl.SetConfigFlags({.MSAA_4X_HINT})
+	rl.SetTargetFPS(240)
+	rl.InitWindow(1280, 720, "odin-test")
 
-	SetConfigFlags({.MSAA_4X_HINT})
-	SetTargetFPS(240)
-	InitWindow(1280, 720, "odin-test")
-
-	camera := Camera3D {
-		position   = Vector3{0, 10, 0},
-		target     = Vector3{0, 10, 10},
-		up         = Vector3{0, 1, 0},
+	camera := rl.Camera3D {
+		position   = {0, 10, 0},
+		target     = {0, 10, 10},
+		up         = {0, 1, 0},
 		fovy       = 90,
 		projection = .PERSPECTIVE,
 	}
 
-	free_camera := Camera3D {
-		position   = Vector3{0, 10, 0},
-		target     = Vector3{0, 10, 10},
-		up         = Vector3{0, 1, 0},
+	free_camera := rl.Camera3D {
+		position   = {0, 10, 0},
+		target     = {0, 10, 10},
+		up         = {0, 1, 0},
 		fovy       = 90,
 		projection = .PERSPECTIVE,
 	}
@@ -86,20 +87,20 @@ main :: proc() {
 		length    = 8,
 		gap       = 4,
 		thickness = 2,
-		color     = GREEN,
+		color     = rl.GREEN,
 	}
 
 	player := Player {
-		orientation = QuaternionFromEuler(0, 0, 0),
+		orientation = rl.QuaternionFromEuler(0, 0, 0),
 		camera      = camera,
-		position    = Vector3{0, 10, 0},
-		force       = Vector3(0),
-		velocity    = Vector3(0),
+		position    = {0, 10, 0},
+		force       = (0),
+		velocity    = (0),
 		mass        = 5,
 	}
 
 	active_camera := &player.camera
-	camera_mode := CameraMode.CUSTOM
+	camera_mode := rl.CameraMode.CUSTOM
 
 	particles: [dynamic]^phy.Particle
 	bodies: [dynamic]^phy.RigidBody
@@ -107,16 +108,16 @@ main :: proc() {
 
 	timer := f64(0)
 
-	for !WindowShouldClose() {
-		BeginDrawing()
-		defer EndDrawing()
-		ClearBackground(ColorBrightness(BLACK, 0.1))
+	for !rl.WindowShouldClose() {
+		rl.BeginDrawing()
+		defer rl.EndDrawing()
+		rl.ClearBackground(rl.ColorBrightness(rl.BLACK, 0.1))
 
-		defer DrawFPS(0, 0)
+		defer rl.DrawFPS(0, 0)
 		defer gui.draw_crosshair(&crosshair)
-		defer DrawText(TextFormat("%d", len(bodies)), 0, 18, 18, WHITE)
+		defer rl.DrawText(rl.TextFormat("%d", len(bodies)), 0, 18, 18, rl.WHITE)
 
-		if IsKeyPressed(.LEFT_ALT) {
+		if rl.IsKeyPressed(.LEFT_ALT) {
 			if camera_mode == .FREE {
 				camera_mode = .CUSTOM
 			} else if camera_mode == .CUSTOM {
@@ -130,16 +131,16 @@ main :: proc() {
 			active_camera = &free_camera
 		}
 
-		BeginMode3D(active_camera^)
-		defer EndMode3D()
-		UpdateCamera(active_camera, camera_mode)
+		rl.BeginMode3D(active_camera^)
+		defer rl.EndMode3D()
+		rl.UpdateCamera(active_camera, camera_mode)
 
-		delta_time := GetFrameTime()
+		delta_time := rl.GetFrameTime()
 		phy.step(&bodies, delta_time)
 		phy.collide(&bodies)
 
-		if IsMouseButtonDown(.LEFT) && GetTime() - timer > 0.1 {
-			timer = GetTime()
+		if rl.IsMouseButtonDown(.LEFT) && rl.GetTime() - timer > 0.1 {
+			timer = rl.GetTime()
 			spawn_particle(active_camera, &particles, &bodies)
 		}
 
@@ -147,12 +148,12 @@ main :: proc() {
 		draw_player(&player)
 
 		for &p in particles {
-			DrawSphere(p.position, p.radius, BLUE)
-			DrawRay(Ray{p.position, p.velocity}, RED)
+			rl.DrawSphere(p.position, p.radius, rl.BLUE)
+			rl.DrawRay({p.position, p.velocity}, rl.RED)
 		}
 
-		DrawGrid(30, 100)
+		rl.DrawGrid(30, 100)
 
-		DisableCursor()
+		rl.DisableCursor()
 	}
 }
